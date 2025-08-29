@@ -2,6 +2,7 @@ package services
 
 import (
 	"encoding/json"
+	"log"
 	"myproject/jwt"
 	"myproject/models"
 	"myproject/repositories"
@@ -72,12 +73,12 @@ func (ts *TaskService) CreateTask(taskText, authorization string) error {
 		Created_at: time.Now(),
 	}
 
-	// delete tasks from redis
-	_ = utils.Delete("tasks:" + parseToken.Uid)
-
 	if err = ts.repo.Create(task); err != nil {
 		return err
 	}
+
+	// delete tasks from redis
+	_ = utils.Delete("tasks:" + parseToken.Uid)
 
 	return nil
 }
@@ -94,7 +95,10 @@ func (ts *TaskService) UpdateTask(task, authorization, uid string) error {
 	}
 
 	// delete tasks from redis
-	_ = utils.Delete("tasks:" + parseToken.Uid)
+	err = utils.Delete("tasks:" + parseToken.Uid)
+	if err != nil {
+		return err
+	}
 	return nil
 }
 
@@ -109,7 +113,7 @@ func (ts *TaskService) DeleteTask(uid, authorization string) error {
 	if err := ts.repo.Delete(uid); err != nil {
 		return err
 	}
-
+	log.Print("parseToken.Uid", "tasks:"+parseToken.Uid)
 	//delete tasks from redis
 	_ = utils.Delete("tasks:" + parseToken.Uid)
 	return nil

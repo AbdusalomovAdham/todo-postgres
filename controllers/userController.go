@@ -1,6 +1,7 @@
 package controllers
 
 import (
+	"log"
 	"myproject/models"
 	"myproject/services"
 	"net/http"
@@ -18,7 +19,6 @@ func NewUserController(service *services.UserService) *UserController {
 
 func (uc *UserController) CreateUser(c *gin.Context) {
 	var user models.User
-
 	// get body
 	if err := c.BindJSON(&user); err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{
@@ -26,6 +26,7 @@ func (uc *UserController) CreateUser(c *gin.Context) {
 		})
 		return
 	}
+	log.Println("user asfdasdfasf", user)
 
 	// validate user
 	if errs := ValidateStruct(user); errs != nil {

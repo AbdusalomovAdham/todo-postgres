@@ -77,7 +77,7 @@ func (tc *TaskController) UpdateTask(c *gin.Context) {
 	}
 
 	// update task
-	if err := tc.service.UpdateTask(input.Task, uid, authorization); err != nil {
+	if err := tc.service.UpdateTask(input.Task, authorization, uid); err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{
 			"error": err.Error(),
 		})

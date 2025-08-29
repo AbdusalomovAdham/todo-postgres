@@ -1,15 +1,11 @@
 package repositories
 
 import (
-	"context"
 	"errors"
 	"myproject/models"
-	"time"
 
-	"github.com/google/uuid"
-	"go.mongodb.org/mongo-driver/bson"
-	"go.mongodb.org/mongo-driver/mongo"
 	"golang.org/x/crypto/bcrypt"
+	"gorm.io/gorm"
 )
 
 func CheckHashPassword(password, hashPassword string) bool {
@@ -18,13 +14,11 @@ func CheckHashPassword(password, hashPassword string) bool {
 }
 
 type UserRepository struct {
-	collections *mongo.Collection
+	db *gorm.DB
 }
 
-func NewUserRepository(db *mongo.Database) *UserRepository {
-	return &UserRepository{
-		collections: db.Collection("users"),
-	}
+func NewUserRepository(db *gorm.DB) *UserRepository {
+	return &UserRepository{db: db}
 }
 
 var (
@@ -32,52 +26,39 @@ var (
 )
 
 func (r *UserRepository) Create(user models.User) error {
-	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
-	defer cancel()
+	var count int64
 
-	// chack username
-	var existing models.User
-	err := r.collections.FindOne(ctx, bson.M{"username": user.Username}).Decode(&existing)
+	// check user
+	if err := r.db.Model(&models.User{}).
+		Where("username = ?", user.Username).
+		Count(&count).Error; err != nil {
+		return err
+	}
 
-	if err == nil {
+	if count > 0 {
 		return ErrUsernameTaken
 	}
 
-	if err != mongo.ErrNoDocuments {
-		return err
-	}
-
-	// create uid
-	user.Uid = uuid.New().String()
-
-	_, err = r.collections.InsertOne(ctx, user)
-
-	if err != nil {
-		return err
-	}
-
-	return nil
+	// create user
+	return r.db.Create(&user).Error
 }
 
 func (r *UserRepository) GetUser(username, password string) (models.User, error) {
 
-	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
-	defer cancel()
-
 	var user models.User
 
 	// get user
-	err := r.collections.FindOne(ctx, bson.M{"username": username}).Decode(&user)
+	err := r.db.
+		Where("username = ?", username).
+		First(&user).Error
 
 	if err != nil {
-		if err == mongo.ErrNoDocuments {
-			return models.User{}, errors.New("user not found")
-		}
-		return models.User{}, err
+		return models.User{}, errors.New("password or username wrong")
 	}
 
+	// check password
 	if !CheckHashPassword(password, user.Password) {
-		return models.User{}, errors.New("incorrect password")
+		return models.User{}, errors.New("password or username wrong")
 	}
 
 	return user, nil

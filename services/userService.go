@@ -11,7 +11,6 @@ import (
 	"time"
 
 	"github.com/google/uuid"
-	"go.mongodb.org/mongo-driver/bson/primitive"
 	"golang.org/x/crypto/bcrypt"
 )
 
@@ -42,7 +41,6 @@ func (us *UserService) CreateUser(user models.User) (string, error) {
 	}
 
 	newUser := models.User{
-		ID:       primitive.NewObjectID(),
 		Uid:      uuid.New().String(),
 		Username: user.Username,
 		Password: hashedPwd,
@@ -67,7 +65,7 @@ func (us *UserService) CreateUser(user models.User) (string, error) {
 	}
 
 	// set redis
-	err = utils.Set("user:"+user.Uid, jsonUser, 5*time.Minute)
+	err = utils.Set("user:"+newUser.Uid, jsonUser, 5*time.Minute)
 	if err != nil {
 		return "", err
 	}

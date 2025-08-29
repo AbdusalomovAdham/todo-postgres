@@ -3,10 +3,10 @@ package models
 import "time"
 
 type Task struct {
-	ID         string    `bson:"_id,omitempty" json:"_id,omitempty"`
-	Uid        string    `bson:"uid" json:"uid"`
-	Created_by string    `bson:"created_by" json:"created_by"`
-	Task       string    `bson:"task" json:"task"`
-	Done       bool      `bson:"done" json:"done"`
-	Created_at time.Time `bson:"created_at" json:"created_at"`
+	Uid        string    `gorm:"primaryKey;not null" json:"uid"`
+	Done       bool      `gorm:"not null" json:"done"`
+	Task       string    `gorm:"not null" json:"task"`
+	Created_by string    `gorm:"not null" json:"created_by"`
+	Created_at time.Time `gorm:"autoCreateTime" json:"created_at"`
+	User       User      `gorm:"foreignKey:Created_by;references:Uid" json:"user"`
 }

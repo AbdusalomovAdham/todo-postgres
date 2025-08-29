@@ -1,25 +1,19 @@
 package routes
 
 import (
-	"context"
-	"log"
+	"myproject/config"
 	"myproject/controllers"
 	"myproject/middleware"
 	"myproject/repositories"
 	"myproject/services"
 
 	"github.com/gin-gonic/gin"
-	"go.mongodb.org/mongo-driver/mongo"
-	"go.mongodb.org/mongo-driver/mongo/options"
 )
 
 func TaskRouter(r *gin.Engine) {
-	client, err := mongo.Connect(context.TODO(), options.Client().ApplyURI("mongodb://localhost:27017"))
-	if err != nil {
-		log.Fatal(err)
-	}
 
-	db := client.Database("todo-app")
+	db := config.ConnectDatabase()
+	
 	repo := repositories.NewTaskRepository(db)
 	service := services.NewTaskService(repo)
 	controllers := controllers.NewTaskController(service)
